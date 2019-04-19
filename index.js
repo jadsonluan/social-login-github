@@ -1,36 +1,13 @@
-var axios = require('axios');
-var fs = require('fs');
-var express = require('express');
+const axios = require('axios');
+const cors = require('cors');
+const express = require('express');
 
-var app = express();
-const client_id = 'Iv1.5110000ec4e59088';
-const client_secret = '7606b76bf217c9db8e15b80d80d183d9ff955f79';
+const app = express();
+app.use(cors());
 
-app.set("view options", {layout: false});
-app.use(express.static(__dirname));
-
-app.get('/', function(req, res) {
-  res.render('index.html');
-});
-
-function requestUser(token) {
-  return axios({
-    url: 'https://api.github.com/user',
-    method: 'GET',
-    headers: {
-      Authorization: `token ${token}`
-    }
-  });
-}
-
-function processUser(data, res) {
-  const { avatar_url, login } = data;
-  var template = `
-    <h1>Bem vindo, ${login}</h1>
-    <img src='${avatar_url}';> 
-  `;
-  res.send(template);
-}
+const client_id = '';
+const client_secret = '';
+let token;
 
 app.get('/auth', function(req, res) {
   const { code } = req.query;
@@ -43,17 +20,17 @@ app.get('/auth', function(req, res) {
       code
     }
   }).then(response => {
-    var first_element = (response.data.split("&"))[0];
-    var access_token = (first_element.split("="))[1];
-    console.log(access_token);
-
-    requestUser(access_token)
-    .then(r => {
-      processUser(r.data, res);
-    })
+    let first_element = (response.data.split("&"))[0];
+    let access_token = (first_element.split("="))[1];
+    token = access_token;
   })
 })
 
-app.listen(8080, () => {
-  console.log('Example app listening on port 8080!');
+app.get('/token', function(req, res) {
+  res.json({'token': token})
+})
+
+app.listen(3000, function () {
+  console.log('Example app listening on port 3000!');
 });
+
