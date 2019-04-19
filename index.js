@@ -5,8 +5,8 @@ const express = require('express');
 const app = express();
 app.use(cors());
 
-const client_id = '';
-const client_secret = '';
+const client_id = 'Iv1.5110000ec4e59088';
+const client_secret = '7606b76bf217c9db8e15b80d80d183d9ff955f79';
 let token;
 
 app.get('/auth', function(req, res) {
@@ -23,6 +23,7 @@ app.get('/auth', function(req, res) {
     let first_element = (response.data.split("&"))[0];
     let access_token = (first_element.split("="))[1];
     token = access_token;
+    res.redirect("http://localhost:8080/auth/");
   })
 })
 
