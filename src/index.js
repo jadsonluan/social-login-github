@@ -1,6 +1,6 @@
-const axios = require('axios');
-const cors = require('cors');
-const express = require('express');
+import axios from 'axios';
+import cors from 'cors';
+import express from 'express';
 
 const app = express();
 app.use(cors());
