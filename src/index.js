@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import axios from 'axios';
 import cors from 'cors';
 import express from 'express';
@@ -5,8 +6,8 @@ import express from 'express';
 const app = express();
 app.use(cors());
 
-const client_id = 'Iv1.5110000ec4e59088';
-const client_secret = '7606b76bf217c9db8e15b80d80d183d9ff955f79';
+const client_id = `${process.env.CLIENT_ID}`;
+const client_secret = `${process.env.CLIENT_SECRET}`;
 let token;
 
 app.get('/auth', function(req, res) {
