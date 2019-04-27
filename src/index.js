@@ -1,36 +1,70 @@
 import 'dotenv/config';
-import axios from 'axios';
 import cors from 'cors';
 import express from 'express';
+import querystring from 'querystring';
+import request from 'request';
+import cookieParser from 'cookie-parser';
+import config from './config';
+import {
+  generateRandomState,
+  getClientUrl,
+  getGithubAuthUrl,
+  getHostUrl
+} from './util';
 
 const app = express();
 app.use(cors());
+app.use(cookieParser());
 
-const client_id = `${process.env.CLIENT_ID}`;
-const client_secret = `${process.env.CLIENT_SECRET}`;
-let token;
+const stateKey = 'github-auth-state';
 
-app.get('/auth', function(req, res) {
+app.get('/login', function(req, res) {
+  const state = generateRandomState(16);
+  res.cookie(stateKey, state);
+  res.redirect(getGithubAuthUrl("/authorize?")
+    + querystring.stringify({
+      client_id: config.github.clientId,
+      redirect_uri: config.github.redirectUri,
+      state
+    })
+  );
+})
+
+app.get('/auth/callback', function(req, res) {
+  const { state } = req.query;
+  const storedState = req.cookies ? req.cookies[stateKey] : null;
+  if (!state || state !== storedState) {
+    res.send("Error: state_mismatch");
+  } else {
+    requestForGithubUserToken(req, res);
+  }
+})
+
+const requestForGithubUserToken = (req, res) => {
+  res.clearCookie(stateKey);
   const { code } = req.query;
-  axios({
-    url: 'https://github.com/login/oauth/access_token',
-    method: 'POST',
-    params: {
-      client_id,
-      client_secret,
-      code
-    }
-  }).then(response => {
-    let first_element = (response.data.split("&"))[0];
-    let access_token = (first_element.split("="))[1];
-    token = access_token;
-    res.redirect("http://localhost:8080/auth/");
-  })
-})
 
-app.get('/token', function(req, res) {
-  res.json({'token': token})
-})
+  const requestOptions = {
+    url: '',
+    json: true,
+    form: {
+      code,
+      redirect_uri: getHostUrl(config.github.redirectUri),
+      client_id: config.github.clientId,
+      client_secret: config.github.clientSecret
+    }
+  }
+
+  request.post(requestOptions, (error, response, body) => {
+    if (!error && response.statusCode === 200) {
+      res.redirect(getClientUrl(config.client.successPath + '/' + body.access_token));
+    } else {
+      res.send(JSON.stringify(error));
+    }
+  });
+}
+
+app.get('/clean', (req, res) => { res.clearCookie(stateKey); res.send('ok');})
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!');
